@@ -15,6 +15,10 @@ export const userSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    username: {
+      type: String,
+      required: true,
+    },
     vmeetingId: {
       type: String,
       required: true,
@@ -46,6 +50,11 @@ export const spaceSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+    },
+    isPersonal: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
     privateYN: {
       type: Boolean,

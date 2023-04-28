@@ -16,6 +16,7 @@ const Profile = (props: any) => {
 
     const [jwt, setJwt] = useState('');
     const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
 
     useEffect(() => {
@@ -25,6 +26,7 @@ const Profile = (props: any) => {
             const decoded: any = jwt_decode(jwt);
 
             setName(decoded.context.user.name);
+            setUsername(decoded.context.user.username);
             setEmail(decoded.context.user.email);
         }
     }, [jwt]);
@@ -33,6 +35,11 @@ const Profile = (props: any) => {
         //props.unityContext.unload();
         navigate('/avatar');
         window.location.reload();
+    }
+
+    const onClickPersonalRoom = async () => {
+        navigate(`/spaces/${username}`);
+        //window.location.reload();
     }
 
     const onClickLogout = async () => {
@@ -64,6 +71,9 @@ const Profile = (props: any) => {
         </div>
         <div className={style.button_normal} onClick={onClickEditAvatar}>
         {t('profile.editAvatar')}
+        </div>
+        <div className={style.button_normal} onClick={onClickPersonalRoom}>
+        {t('profile.personalRoom')}
         </div>
         <div className={style.button_warning} onClick={onClickLogout}>
         {t('profile.logout')}

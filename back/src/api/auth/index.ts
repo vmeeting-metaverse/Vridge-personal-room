@@ -7,12 +7,13 @@
 
 import express, { Request, Response } from 'express';
 import { sign, verifyVmeetingJWT } from '../../libs/auth';
-import { User } from '../../libs/mongo';
+import { Space, SpaceType, User } from '../../libs/mongo';
 import { ErrorType } from '../../libs/types';
 
 const router = express.Router();
 
 interface LoginReqBody {
+  username: string;
   vmeetingToken: string;
 }
 
@@ -96,7 +97,7 @@ interface LoginResBody {
 router.post(
   '/login',
   async (req: Request<unknown, LoginResBody, LoginReqBody>, res: Response<LoginResBody, unknown>) => {
-    const { vmeetingToken } = req.body;
+    const { username, vmeetingToken } = req.body;
     // 1. validation check
     if (!vmeetingToken) {
       res.status(400).json({
@@ -135,6 +136,7 @@ router.post(
           name: vmeetingName,
           language: 'ko',
           avatarSrc: undefined,
+          username: username,
           vmeetingId,
         });
         userId = newUser._id.toHexString();
@@ -154,7 +156,30 @@ router.post(
             },
           );
         }
-      } // 4. sign jwt
+      }
+
+      // Private Space
+      // Alternatively, You can do this when creating an account
+      // Check if own space is exist in DB
+      const personalSpace = await Space.find({ name: vmeetingId });
+      const spaceType = await SpaceType.find({name: 'conference'});
+      // Create if not exist
+      if (personalSpace.length === 0){
+        const newSpace = await Space.create({
+          typeId: spaceType[0],  // space type
+          name: username, // same as user's ID
+          isPersonal: true, // personal space
+          privateYN: false, // need password
+          lobbyYN: false,
+          ownerId: users[0],
+          openMediaBoardYN: false,
+          openPlatformYN: false,
+          onlyPresenterModeYN: false,
+          useYN: true
+        });
+      }
+
+      // 4. sign jwt
       const jwt = sign(userId, userName, vmeetingId, vmeetingToken);
       // 5. send jwt
       res.json({

@@ -177,7 +177,7 @@ const MainLayout = ({ children }: Props) => {
       //지울 때 참여 인원 수 확인 로직이 필요
       const decoded: any = jwt_decode(jwt);
       const spaceOwnerId = curSpace.get().ownerId;
-      if (decoded.userId === spaceOwnerId) {
+      if (decoded.userId === spaceOwnerId && !curSpace.get().isPersonal) {
         const roomDeleteResult = await deleteSpaceById(jwt, curSpace.get().id);
         //sendMessage('MyNetworkManager', 'comm_destroyMediaBoard', curMediaboardNetId.get());
       }

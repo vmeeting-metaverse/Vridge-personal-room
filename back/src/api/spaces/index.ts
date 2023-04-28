@@ -44,7 +44,7 @@
 
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { Participate, Space, spaceSchema, SpaceType } from '../../libs/mongo';
+import { Participate, Space, spaceSchema, SpaceType, User } from '../../libs/mongo';
 import { ErrorType } from '../../libs/types';
 import { UserRes } from '../users';
 
@@ -54,6 +54,7 @@ interface SpaceRes {
   id: string;
   typeId: string;
   name: string;
+  isPersonal: boolean;
   privateYN: boolean;
   lobbyYN: boolean;
   ownerId: string;
@@ -206,6 +207,12 @@ router.post(
           target: 'name',
           message: 'Name is already exist',
         });
+      } else if (await User.findOne({ username: name })){
+        error.push({
+          type: 'INVALID_INPUT',
+          target: 'name',
+          message: 'Name is reserved'
+        });
       }
       if (lobbyYN === undefined) {
         error.push({
@@ -262,6 +269,7 @@ router.post(
           id: space._id.toHexString(),
           name: space.name,
           typeId: space.typeId.toHexString(),
+          isPersonal: space.isPersonal,
           privateYN: space.privateYN,
           lobbyYN: space.lobbyYN,
           ownerId: space.ownerId.toHexString(),
@@ -358,13 +366,14 @@ interface SpacesGetResBody {
  */
 router.get('/', async (_req: Request<unknown, SpacesGetResBody, unknown>, res: Response<SpacesGetResBody, unknown>) => {
   try {
-    const spaces = await Space.find({ useYN: true });
+    const spaces = await Space.find({ isPersonal: false, useYN: true });
     res.status(200).json({
       spaces: spaces.map((space) => ({
         id: space._id.toHexString(),
         typeId: space.typeId.toHexString(),
         name: space.name,
         notice: space.notice,
+        isPersonal: space.isPersonal,
         privateYN: space.privateYN,
         lobbyYN: space.lobbyYN,
         ownerId: space.ownerId.toHexString(),
@@ -483,6 +492,7 @@ router.get('/:id', async (req: Request<unknown, SpaceGetResBody, unknown>, res: 
         typeId: space.typeId.toHexString(),
         name: space.name,
         notice: space.notice,
+        isPersonal: space.isPersonal,
         privateYN: space.privateYN,
         lobbyYN: space.lobbyYN,
         ownerId: space.ownerId.toHexString(),
@@ -591,6 +601,7 @@ router.get('/:id', async (req: Request<unknown, SpaceGetResBody, unknown>, res: 
         typeId: space.typeId.toHexString(),
         name: space.name,
         notice: space.notice,
+        isPersonal: space.isPersonal,
         privateYN: space.privateYN,
         lobbyYN: space.lobbyYN,
         ownerId: space.ownerId.toHexString(),
@@ -868,6 +879,7 @@ router.patch(
           typeId: updatedSpace.typeId.toHexString(),
           name: updatedSpace.name,
           notice: updatedSpace.notice,
+          isPersonal: space.isPersonal,
           privateYN: updatedSpace.privateYN,
           lobbyYN: updatedSpace.lobbyYN,
           ownerId: updatedSpace.ownerId.toHexString(),
@@ -1003,6 +1015,18 @@ router.delete(
               type: 'FORBIDDEN',
               target: 'param.id',
               message: 'Only the owner can modify info',
+            },
+          ],
+        });
+        return;
+      }
+      if (space.isPersonal) {
+        res.status(403).json({
+          error: [
+            {
+              type: 'FORBIDDEN',
+              target: 'param.id',
+              message: 'Personal space cannot be deleted',
             },
           ],
         });

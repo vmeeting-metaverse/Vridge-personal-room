@@ -13,6 +13,7 @@
     "profile": {
         "title": "My Profile",
         "editProfile": "Edit Profile",
+        "personalRoom": "Go to My Room",
         "editAvatar": "Edit Avatar",
         "logout": "Logout",
         "accountSetting": "Account Settings",
